@@ -8,6 +8,7 @@ import org.springframework.kafka.annotation.RetryableTopic;
 import org.springframework.kafka.annotation.TopicPartition;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
@@ -42,7 +43,12 @@ public class KafkaMessageListener {
 //	}
 
 	// consuming message on single partition of a topic
-	@RetryableTopic(attempts = "3") //
+	@RetryableTopic(attempts = "3", 
+			backoff = @Backoff(delay = 3000, multiplier = 1.5, maxDelay = 15000),
+			exclude = {NullPointerException.class, RuntimeException.class}) 
+	// backoff for specifying delay in retrying, 
+	// exclude for specified Exceptions, will not retry for the exceptions specified
+	
 	@KafkaListener(topics = "retry-topic", groupId = "retry-group", topicPartitions = {
 			@TopicPartition(topic = "single-partition-message-send", partitions = "3") })
 	public void consumeOnSinglePartition(String message) {
